@@ -1,0 +1,15 @@
+Flask==2.3.3
+flask-cors==5.0.1
+python-socketio==5.13.0
+eventlet==0.35.2
+pyttsx3==2.98
+SpeechRecognition==3.10.1
+comtypes==1.4.10
+pypiwin32==223
+pywin32==310
+Werkzeug==2.3.7
+Jinja2==3.1.2
+itsdangerous==2.1.2
+click==8.1.7
+python-engineio==4.11.0
+python-engineio-client==4.11.0 

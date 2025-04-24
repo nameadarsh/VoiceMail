@@ -1,0 +1,284 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Voice Email Assistant</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <!-- Load Socket.IO first -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.0.1/socket.io.js"></script>
+    <script>
+        // Verify Socket.IO loaded correctly
+        if (typeof io === 'undefined') {
+            console.error('Failed to load Socket.IO');
+            window.addEventListener('DOMContentLoaded', () => {
+                document.querySelector('.error-message').textContent = 'Failed to load Socket.IO library';
+            });
+        }
+    </script>
+</head>
+<body>
+    <div class="container">
+        <h1>Voice Email Assistant</h1>
+        <p>Logged in as: {{ email }}</p>
+        
+        <!-- Status Bar -->
+        <div id="status-bar" class="status-bar">
+            <div id="connection-status" class="status-indicator">
+                <span class="status-dot"></span>
+                <span class="status-text">Disconnected</span>
+            </div>
+            <div id="voice-status" class="status-indicator">
+                <span class="status-dot"></span>
+                <span class="status-text">Voice Ready</span>
+            </div>
+        </div>
+
+        <!-- Main Controls -->
+        <div class="controls">
+            <button id="startBtn" class="primary-button">Start Voice Mail</button>
+            <button id="reconnectBtn" class="secondary-button" style="display: none;">Reconnect</button>
+        </div>
+
+        <!-- Progress Indicator -->
+        <div id="progress-indicator" class="progress-container" style="display: none;">
+            <div class="progress-step" data-step="start">
+                <div class="step-dot"></div>
+                <div class="step-label">Start</div>
+            </div>
+            <div class="progress-step" data-step="recipient">
+                <div class="step-dot"></div>
+                <div class="step-label">Recipient</div>
+            </div>
+            <div class="progress-step" data-step="subject">
+                <div class="step-dot"></div>
+                <div class="step-label">Subject</div>
+            </div>
+            <div class="progress-step" data-step="content">
+                <div class="step-dot"></div>
+                <div class="step-label">Content</div>
+            </div>
+            <div class="progress-step" data-step="confirm">
+                <div class="step-dot"></div>
+                <div class="step-label">Confirm</div>
+            </div>
+        </div>
+
+        <!-- Feedback Area -->
+        <div id="feedback-area" class="feedback-area">
+            <div id="current-action" class="current-action"></div>
+            <div id="voice-feedback" class="voice-feedback"></div>
+            <div id="error-message" class="error-message"></div>
+        </div>
+
+        <!-- Email Preview -->
+        <div id="email-preview" class="email-preview" style="display: none;">
+            <h2>Email Preview</h2>
+            <div class="email-details">
+                <div class="detail-row">
+                    <span class="label">To:</span>
+                    <span id="preview-to" class="value"></span>
+                </div>
+                <div class="detail-row">
+                    <span class="label">Subject:</span>
+                    <span id="preview-subject" class="value"></span>
+                </div>
+                <div class="detail-row">
+                    <span class="label">Content:</span>
+                    <div id="preview-content" class="value content"></div>
+                </div>
+            </div>
+            <div class="confirmation-buttons">
+                <button id="confirmBtn" class="confirm-button">Send Email</button>
+                <button id="cancelBtn" class="cancel-button">Cancel</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Load application scripts after DOM is ready -->
+    <script src="{{ url_for('static', filename='js/advanced-speech.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/email-assistant.js') }}"></script>
+    <script>
+        // Wait for everything to load before initializing
+        window.addEventListener('load', function() {
+            try {
+                // Initialize components
+                const assistant = new EmailAssistant();
+                const speechHandler = new AdvancedSpeechHandler();
+                
+                // Get UI elements
+                const startBtn = document.getElementById('startBtn');
+                const reconnectBtn = document.getElementById('reconnectBtn');
+                const confirmBtn = document.getElementById('confirmBtn');
+                const cancelBtn = document.getElementById('cancelBtn');
+                const connectionStatus = document.getElementById('connection-status');
+                const voiceStatus = document.getElementById('voice-status');
+                const progressIndicator = document.getElementById('progress-indicator');
+                const emailPreview = document.getElementById('email-preview');
+                const currentAction = document.getElementById('current-action');
+                const voiceFeedback = document.getElementById('voice-feedback');
+                const errorMessage = document.getElementById('error-message');
+
+                function updateConnectionStatus(isConnected) {
+                    const statusDot = connectionStatus.querySelector('.status-dot');
+                    const statusText = connectionStatus.querySelector('.status-text');
+                    
+                    if (isConnected) {
+                        statusDot.classList.remove('disconnected');
+                        statusDot.classList.add('connected');
+                        statusText.textContent = 'Connected';
+                        startBtn.disabled = false;
+                        reconnectBtn.style.display = 'none';
+                    } else {
+                        statusDot.classList.remove('connected');
+                        statusDot.classList.add('disconnected');
+                        statusText.textContent = 'Disconnected';
+                        startBtn.disabled = true;
+                        reconnectBtn.style.display = 'block';
+                    }
+                }
+
+                function updateVoiceStatus(status) {
+                    const statusDot = voiceStatus.querySelector('.status-dot');
+                    const statusText = voiceStatus.querySelector('.status-text');
+                    
+                    statusDot.className = 'status-dot';
+                    statusDot.classList.add(status.toLowerCase());
+                    statusText.textContent = status;
+                }
+
+                function updateProgress(step) {
+                    const steps = progressIndicator.querySelectorAll('.progress-step');
+                    steps.forEach(s => {
+                        if (s.dataset.step === step) {
+                            s.classList.add('active');
+                        } else {
+                            s.classList.remove('active');
+                        }
+                    });
+                }
+
+                function showError(message) {
+                    errorMessage.textContent = message;
+                    errorMessage.style.display = 'block';
+                    setTimeout(() => {
+                        errorMessage.style.display = 'none';
+                    }, 5000);
+                }
+
+                function updateEmailPreview(details) {
+                    if (!details) return;
+                    
+                    document.getElementById('preview-to').textContent = details.to || '';
+                    document.getElementById('preview-subject').textContent = details.subject || '';
+                    document.getElementById('preview-content').textContent = details.content || '';
+                    emailPreview.style.display = 'block';
+                }
+
+                // Set up speech recognition callbacks
+                speechHandler.onStart = () => {
+                    updateVoiceStatus('Listening');
+                    voiceFeedback.textContent = 'Listening...';
+                };
+
+                speechHandler.onEnd = () => {
+                    updateVoiceStatus('Ready');
+                    voiceFeedback.textContent = '';
+                };
+
+                speechHandler.onError = (error) => {
+                    updateVoiceStatus('Error');
+                    showError('Voice recognition error: ' + error);
+                };
+
+                speechHandler.onResult = (text) => {
+                    voiceFeedback.textContent = 'You said: ' + text;
+                    assistant.sendResponse(text);
+                };
+
+                // Handle state changes from the email assistant
+                assistant.onStateChange((state) => {
+                    switch(state.currentStep) {
+                        case 'connected':
+                            updateConnectionStatus(true);
+                            break;
+                        case 'disconnected':
+                            updateConnectionStatus(false);
+                            break;
+                        case 'starting':
+                            updateProgress('start');
+                            currentAction.textContent = 'Starting new email...';
+                            break;
+                        case 'asking':
+                            if (state.currentQuestion.includes('recipient')) {
+                                updateProgress('recipient');
+                                currentAction.textContent = 'Please specify the recipient...';
+                            } else if (state.currentQuestion.includes('subject')) {
+                                updateProgress('subject');
+                                currentAction.textContent = 'Please specify the subject...';
+                            } else if (state.currentQuestion.includes('content')) {
+                                updateProgress('content');
+                                currentAction.textContent = 'Please specify the content...';
+                            }
+                            speechHandler.startListening();
+                            break;
+                        case 'confirming':
+                            updateProgress('confirm');
+                            currentAction.textContent = 'Please review your email';
+                            updateEmailPreview(state.emailDetails);
+                            break;
+                        case 'completed':
+                            currentAction.textContent = 'Email sent successfully!';
+                            progressIndicator.style.display = 'none';
+                            setTimeout(() => {
+                                currentAction.textContent = '';
+                            }, 3000);
+                            break;
+                        case 'error':
+                            showError(state.error);
+                            break;
+                    }
+                });
+
+                // Handle errors
+                assistant.onError((error) => {
+                    console.error('Assistant error:', error);
+                    showError(error);
+                });
+
+                // Button event listeners
+                startBtn.addEventListener('click', () => {
+                    errorMessage.style.display = 'none';
+                    progressIndicator.style.display = 'block';
+                    emailPreview.style.display = 'none';
+                    currentAction.textContent = 'Starting voice email process...';
+                    assistant.startEmailProcess();
+                });
+
+                reconnectBtn.addEventListener('click', () => {
+                    errorMessage.style.display = 'none';
+                    currentAction.textContent = 'Reconnecting...';
+                    assistant.connect();
+                });
+
+                confirmBtn.addEventListener('click', () => {
+                    currentAction.textContent = 'Sending email...';
+                    assistant.confirmEmail();
+                    emailPreview.style.display = 'none';
+                });
+
+                cancelBtn.addEventListener('click', () => {
+                    currentAction.textContent = 'Cancelling...';
+                    assistant.cancelEmail();
+                    emailPreview.style.display = 'none';
+                    progressIndicator.style.display = 'none';
+                });
+
+            } catch (error) {
+                console.error('Initialization error:', error);
+                document.querySelector('.error-message').textContent = 'Failed to initialize: ' + error.message;
+            }
+        });
+    </script>
+</body>
+</html>

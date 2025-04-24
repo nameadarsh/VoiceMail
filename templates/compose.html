@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Compose Voice Email</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.0.1/socket.io.js"></script>
+</head>
+<body>
+    <div class="container">
+        <h1>Voice Email Assistant</h1>
+        <p class="user-info">Logged in as: {{ email }}</p>
+        
+        <div class="compose-form">
+            <div class="form-group">
+                <label for="to">To:</label>
+                <input type="email" id="to" required>
+                <button class="voice-button" onclick="startVoiceInput('to')">
+                    <span class="mic-icon">🎤</span>
+                </button>
+            </div>
+            
+            <div class="form-group">
+                <label for="subject">Subject:</label>
+                <input type="text" id="subject" required>
+                <button class="voice-button" onclick="startVoiceInput('subject')">
+                    <span class="mic-icon">🎤</span>
+                </button>
+            </div>
+            
+            <div class="form-group">
+                <label for="body">Message:</label>
+                <textarea id="body" rows="6" required></textarea>
+                <button class="voice-button" onclick="startVoiceInput('body')">
+                    <span class="mic-icon">🎤</span>
+                </button>
+            </div>
+            
+            <div class="button-group">
+                <button id="sendBtn" class="primary-button" onclick="sendEmail()">Send Email</button>
+                <button class="secondary-button" onclick="clearForm()">Clear</button>
+            </div>
+        </div>
+        
+        <div id="status" class="status-message" style="display: none;"></div>
+    </div>
+
+    <script>
+        // Initialize Socket.IO
+        const socket = io();
+        let recognition = null;
+        let currentInput = null;
+        
+        // Initialize Web Speech API
+        function initSpeechRecognition() {
+            if ('webkitSpeechRecognition' in window) {
+                recognition = new webkitSpeechRecognition();
+                recognition.continuous = false;
+                recognition.interimResults = true;
+                
+                recognition.onresult = (event) => {
+                    const result = event.results[0][0].transcript;
+                    if (currentInput && event.results[0].isFinal) {
+                        document.getElementById(currentInput).value = result;
+                    }
+                };
+                
+                recognition.onerror = (event) => {
+                    showStatus('Error: ' + event.error, 'error');
+                };
+                
+                recognition.onend = () => {
+                    document.querySelector(`button[onclick="startVoiceInput('${currentInput}')"]`).classList.remove('listening');
+                };
+                
+            } else {
+                showStatus('Speech recognition not supported in this browser', 'error');
+            }
+        }
+        
+        // Start voice input for a specific field
+        function startVoiceInput(inputId) {
+            if (!recognition) {
+                initSpeechRecognition();
+            }
+            
+            if (recognition) {
+                currentInput = inputId;
+                recognition.start();
+                document.querySelector(`button[onclick="startVoiceInput('${inputId}')"]`).classList.add('listening');
+            }
+        }
+        
+        // Send email
+        function sendEmail() {
+            const to = document.getElementById('to').value;
+            const subject = document.getElementById('subject').value;
+            const body = document.getElementById('body').value;
+            
+            if (!to || !subject || !body) {
+                showStatus('Please fill in all fields', 'error');
+                return;
+            }
+            
+            socket.emit('send_email', { to, subject, body });
+            showStatus('Sending email...', 'info');
+        }
+        
+        // Clear form
+        function clearForm() {
+            document.getElementById('to').value = '';
+            document.getElementById('subject').value = '';
+            document.getElementById('body').value = '';
+        }
+        
+        // Show status message
+        function showStatus(message, type = 'info') {
+            const status = document.getElementById('status');
+            status.textContent = message;
+            status.className = 'status-message ' + type;
+            status.style.display = 'block';
+            
+            if (type !== 'error') {
+                setTimeout(() => {
+                    status.style.display = 'none';
+                }, 5000);
+            }
+        }
+        
+        // Socket.IO event handlers
+        socket.on('connect', () => {
+            showStatus('Connected to server', 'success');
+        });
+        
+        socket.on('disconnect', () => {
+            showStatus('Disconnected from server', 'error');
+        });
+        
+        socket.on('error', (data) => {
+            showStatus(data.message, 'error');
+        });
+        
+        socket.on('email_result', (data) => {
+            showStatus(data.message, data.success ? 'success' : 'error');
+            if (data.success) {
+                clearForm();
+            }
+        });
+    </script>
+</body>
+</html> 
