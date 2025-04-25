@@ -1,0 +1,3 @@
+"""
+Voice Mail Assistant package
+""" 

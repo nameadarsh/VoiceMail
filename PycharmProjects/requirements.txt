@@ -1,0 +1,8 @@
+Flask==2.3.3
+Werkzeug==2.3.7
+secure-smtplib==0.1.1
+python-dotenv==1.0.0
+cryptography==41.0.3
+pytest==7.4.2
+gunicorn==21.2.0
+email-validator==2.0.0 

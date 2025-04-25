@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login - Voice Mail Assistant</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+</head>
+<body>
+    <div class="container">
+        <div class="card">
+            <h1 style="text-align: center; color: var(--primary-color);">Voice Mail Assistant</h1>
+            
+            {% with messages = get_flashed_messages(with_categories=true) %}
+                {% if messages %}
+                    <div class="flash-messages">
+                        {% for category, message in messages %}
+                            <div class="flash-message {{ category }}">{{ message }}</div>
+                        {% endfor %}
+                    </div>
+                {% endif %}
+            {% endwith %}
+
+            <div class="instructions-dropdown">
+                <button class="dropdown-btn">
+                    <i class="fas fa-info-circle"></i> How to Get Your App Password
+                </button>
+                <div class="dropdown-content">
+                    <ol>
+                        <li>Go to your <a href="https://myaccount.google.com/security" target="_blank">Google Account Security settings</a></li>
+                        <li>Enable 2-Step Verification if not already enabled</li>
+                        <li>Search for "App passwords"</li>
+                        <li>Select "Mail" and "Other (Custom name)"</li>
+                        <li>Enter "Voice Mail Assistant" as the name</li>
+                        <li>Click "Generate"</li>
+                        <li>Copy the 16-character password</li>
+                    </ol>
+                    <p class="note">Note: Use this App Password instead of your regular Gmail password to log in.</p>
+                </div>
+            </div>
+
+            <form method="POST" action="{{ url_for('login') }}">
+                <div class="form-group">
+                    <label for="email">Gmail Address</label>
+                    <input type="email" id="email" name="email" required>
+                </div>
+                <div class="form-group">
+                    <label for="password">App Password</label>
+                    <input type="password" id="password" name="password" required>
+                </div>
+                <button type="submit" class="btn btn-primary" style="width: 100%;">Login</button>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        document.querySelector('.dropdown-btn').addEventListener('click', function() {
+            const content = this.nextElementSibling;
+            content.style.display = content.style.display === 'block' ? 'none' : 'block';
+        });
+    </script>
+</body>
+</html> 

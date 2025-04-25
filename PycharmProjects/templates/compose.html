@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Compose Email - Voice Mail Assistant</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/fontawesome.min.css">
+</head>
+<body>
+    <header class="header">
+        <div class="container">
+            <a href="{{ url_for('index') }}" class="logo">Voice Mail Assistant</a>
+            <nav class="nav-links">
+                <a href="{{ url_for('compose') }}">Compose</a>
+                <a href="{{ url_for('logout') }}">Logout</a>
+            </nav>
+        </div>
+    </header>
+
+    <div class="container">
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                <div class="flash-messages">
+                    {% for category, message in messages %}
+                        <div class="flash-message {{ category }}">{{ message }}</div>
+                    {% endfor %}
+                </div>
+            {% endif %}
+        {% endwith %}
+
+        <div class="card">
+            <h2>Compose Email</h2>
+            <form method="POST" action="{{ url_for('compose') }}">
+                <div class="form-group">
+                    <label for="to">To:</label>
+                    <div class="input-group">
+                        <div class="input-wrapper">
+                            <input type="email" id="to" name="to" required>
+                            <button type="button" class="mic-button" data-target="to" title="Click to start/stop voice input">
+                                <i class="fas fa-microphone"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label for="subject">Subject:</label>
+                    <div class="input-group">
+                        <div class="input-wrapper">
+                            <input type="text" id="subject" name="subject" required>
+                            <button type="button" class="mic-button" data-target="subject" title="Click to start/stop voice input">
+                                <i class="fas fa-microphone"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label for="message">Message:</label>
+                    <div class="input-group">
+                        <div class="input-wrapper">
+                            <textarea id="message" name="message" rows="6" required></textarea>
+                            <button type="button" class="mic-button" data-target="message" title="Click to start/stop voice input">
+                                <i class="fas fa-microphone"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <button type="submit" class="btn btn-primary">Send Email</button>
+            </form>
+        </div>
+    </div>
+
+    <script src="{{ url_for('static', filename='js/email-assistant.js') }}"></script>
+</body>
+</html> 
