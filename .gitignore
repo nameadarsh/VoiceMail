@@ -22,10 +22,8 @@ wheels/
 
 # Virtual Environment
 venv/
-.venv/
 ENV/
-env/
-.venv1/
+.env
 
 # IDE
 .idea/
@@ -33,15 +31,16 @@ env/
 *.swp
 *.swo
 
-# Project specific
+# Logs
 logs/
 *.log
-email_pass.bin
-chrome-profile/
-.env
-.env.local
-.env.*.local
 
-# OS specific
-.DS_Store
-Thumbs.db 
+# Local development
+*.db
+*.sqlite3
+
+# Chrome profile
+chrome-profile/
+
+# Encryption key
+encryption.key 

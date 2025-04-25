@@ -5,50 +5,21 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Voice Email Login</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
 </head>
 <body>
     <div class="container">
-        <h1>Voice Email Assistant</h1>
-        
-        {% with messages = get_flashed_messages() %}
-            {% if messages %}
+            <h1>Voice Email Assistant</h1>
+
+            {% with messages = get_flashed_messages() %}
+                {% if messages %}
                 <div class="flash-messages">
                     {% for message in messages %}
                         <div class="alert">{{ message }}</div>
                     {% endfor %}
                 </div>
-            {% endif %}
-        {% endwith %}
-        
-        <div class="instructions-dropdown">
-            <button class="dropdown-btn" onclick="toggleInstructions()">
-                How to Get App Password <i class="fas fa-chevron-down"></i>
-            </button>
-            <div class="dropdown-content" id="instructions">
-                <ol>
-                    <li>Go to your Google Account settings at <a href="https://myaccount.google.com" target="_blank">myaccount.google.com</a></li>
-                    <li>Enable 2-Step Verification if not already enabled:
-                        <ul>
-                            <li>Go to Security</li>
-                            <li>Click on "2-Step Verification"</li>
-                            <li>Follow the steps to enable it</li>
-                        </ul>
-                    </li>
-                    <li>Generate an App Password:
-                        <ul>
-                            <li>Go back to Security</li>
-                            <li>Click on "App Passwords" (requires 2-Step Verification)</li>
-                            <li>Select "Mail" for app and "Other" for device</li>
-                            <li>Name it "Voice Email Assistant"</li>
-                            <li>Copy the 16-character password generated</li>
-                        </ul>
-                    </li>
-                    <li>Use this App Password in the login form below</li>
-                </ol>
-            </div>
-        </div>
-        
+                {% endif %}
+            {% endwith %}
+
         <div class="login-form">
             <form method="POST">
                 <div class="form-group">
@@ -69,15 +40,5 @@
             </form>
         </div>
     </div>
-
-    <script>
-        function toggleInstructions() {
-            const content = document.getElementById('instructions');
-            content.style.display = content.style.display === 'block' ? 'none' : 'block';
-            const btn = document.querySelector('.dropdown-btn i');
-            btn.classList.toggle('fa-chevron-up');
-            btn.classList.toggle('fa-chevron-down');
-        }
-    </script>
 </body>
 </html>

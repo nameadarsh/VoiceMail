@@ -2,10 +2,6 @@ let socket = null;
 let isConnected = false;
 let errorTimeout = null;
 
-// Global variables for managing recording state
-let isRecording = false;
-let recognition = null;
-
 function updateConnectionStatus(connected) {
     isConnected = connected;
     const indicator = document.querySelector('.connection-indicator');
@@ -135,72 +131,6 @@ document.getElementById('sendButton').addEventListener('click', () => {
 document.getElementById('cancelButton').addEventListener('click', () => {
     if (socket && isConnected) {
         socket.emit('cancel');
-    }
-});
-
-// Initialize the Web Speech API
-function initializeSpeechRecognition() {
-    if ('webkitSpeechRecognition' in window) {
-        recognition = new webkitSpeechRecognition();
-        recognition.continuous = true;
-        recognition.interimResults = true;
-        
-        recognition.onresult = function(event) {
-            const result = event.results[event.results.length - 1];
-            if (result.isFinal) {
-                const text = result.item(0).transcript;
-                const activeInput = document.querySelector(':focus');
-                if (activeInput) {
-                    // Append new text to existing content
-                    activeInput.value += ' ' + text;
-                }
-            }
-        };
-        
-        recognition.onerror = function(event) {
-            console.error('Speech recognition error:', event.error);
-            stopRecording();
-        };
-    } else {
-        alert('Speech recognition is not supported in this browser. Please use Chrome.');
-    }
-}
-
-// Function to toggle recording state
-function toggleRecording(button) {
-    if (!recognition) {
-        initializeSpeechRecognition();
-    }
-    
-    if (!isRecording) {
-        // Start recording
-        recognition.start();
-        isRecording = true;
-        button.classList.add('listening');
-        button.innerHTML = '<i class="fas fa-microphone"></i> Stop';
-    } else {
-        // Stop recording
-        stopRecording();
-    }
-}
-
-// Function to stop recording
-function stopRecording() {
-    if (recognition) {
-        recognition.stop();
-    }
-    isRecording = false;
-    const buttons = document.querySelectorAll('.voice-button');
-    buttons.forEach(button => {
-        button.classList.remove('listening');
-        button.innerHTML = '<i class="fas fa-microphone"></i>';
-    });
-}
-
-// Event listener for page unload to cleanup
-window.addEventListener('beforeunload', function() {
-    if (recognition) {
-        recognition.stop();
     }
 });
 

@@ -55,11 +55,11 @@ class EmailAssistant {
             });
 
             this.setupSocketListeners();
-        } catch (error) {
-            console.error('Failed to initialize socket:', error);
-            this.handleError('Failed to initialize connection: ' + error.message);
-        }
+    } catch (error) {
+        console.error('Failed to initialize socket:', error);
+        this.handleError('Failed to initialize connection: ' + error.message);
     }
+}
 
     setupSocketListeners() {
         if (!this.socket) return;
@@ -102,8 +102,8 @@ class EmailAssistant {
         // Application events with error handling
         this.socket.on('started', (data) => {
             try {
-                console.log('Email process started:', data);
-                this.updateState({ currentStep: 'starting' });
+            console.log('Email process started:', data);
+            this.updateState({ currentStep: 'starting' });
             } catch (error) {
                 this.handleError('Error processing start event: ' + error.message);
             }
@@ -111,11 +111,11 @@ class EmailAssistant {
 
         this.socket.on('question', (data) => {
             try {
-                console.log('Question received:', data);
-                this.updateState({ 
-                    currentStep: 'asking',
-                    currentQuestion: data.question
-                });
+            console.log('Question received:', data);
+            this.updateState({ 
+                currentStep: 'asking',
+                currentQuestion: data.question
+            });
             } catch (error) {
                 this.handleError('Error processing question: ' + error.message);
             }
@@ -123,12 +123,12 @@ class EmailAssistant {
 
         this.socket.on('email_details', (data) => {
             try {
-                console.log('Email details received:', data);
-                this.emailDetails = data.details;
-                this.updateState({ 
-                    currentStep: 'confirming',
-                    emailDetails: data.details
-                });
+            console.log('Email details received:', data);
+            this.emailDetails = data.details;
+            this.updateState({ 
+                currentStep: 'confirming',
+                emailDetails: data.details
+            });
             } catch (error) {
                 this.handleError('Error processing email details: ' + error.message);
             }
@@ -136,11 +136,11 @@ class EmailAssistant {
 
         this.socket.on('result', (data) => {
             try {
-                console.log('Result received:', data);
-                this.updateState({ 
-                    currentStep: 'completed',
-                    result: data
-                });
+            console.log('Result received:', data);
+            this.updateState({ 
+                currentStep: 'completed',
+                result: data
+            });
             } catch (error) {
                 this.handleError('Error processing result: ' + error.message);
             }
@@ -246,13 +246,13 @@ class EmailAssistant {
 
     onStateChange(callback) {
         if (callback && typeof callback === 'function') {
-            this.stateChangeCallbacks.push(callback);
+        this.stateChangeCallbacks.push(callback);
         }
     }
 
     onError(callback) {
         if (callback && typeof callback === 'function') {
-            this.errorCallbacks.push(callback);
+        this.errorCallbacks.push(callback);
         }
     }
 
